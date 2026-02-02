@@ -22,7 +22,15 @@ export function getConfig(): StandaloneConfig {
   if (!stored) return DEFAULT_CONFIG;
 
   try {
-    return { ...DEFAULT_CONFIG, ...JSON.parse(stored) };
+    const parsed = { ...DEFAULT_CONFIG, ...JSON.parse(stored) };
+    // Fix stale localhost URLs when served from a different host
+    if (
+      parsed.deploymentUrl.includes("localhost") &&
+      !window.location.hostname.includes("localhost")
+    ) {
+      parsed.deploymentUrl = window.location.origin;
+    }
+    return parsed;
   } catch {
     return DEFAULT_CONFIG;
   }

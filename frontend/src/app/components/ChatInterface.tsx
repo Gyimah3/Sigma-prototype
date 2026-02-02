@@ -554,10 +554,10 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
               className="font-inherit field-sizing-content flex-1 resize-none border-0 bg-transparent px-[18px] pb-[13px] pt-[14px] text-sm leading-7 text-primary outline-none placeholder:text-tertiary"
               rows={1}
             />
-            <div className="flex justify-between gap-2 p-3">
-              <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 p-3">
                 <Button
                   type={isLoading ? "button" : "submit"}
+                  size="lg"
                   variant={isLoading ? "destructive" : "default"}
                   onClick={isLoading ? stopStream : handleSubmit}
                   disabled={!isLoading && (submitDisabled || !input.trim())}
@@ -574,7 +574,6 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
                     </>
                   )}
                 </Button>
-              </div>
             </div>
           </form>
         </div>
