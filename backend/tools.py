@@ -56,7 +56,7 @@ def think(reflection: str) -> str:
     Returns:
         Confirmation that reflection was recorded.
     """
-    return f"Reflection recorded. Proceed with your analysis."
+    return f"Reflection recorded. Proceeding with analysis."
 
 
 # ── Canvas Tools ───────────────────────────────────────────────────
