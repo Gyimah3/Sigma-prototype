@@ -6,23 +6,30 @@ export interface StandaloneConfig {
 
 const CONFIG_KEY = "sigma-config";
 
-// Default config — connects directly to the local Horo backend
-const DEFAULT_CONFIG: StandaloneConfig = {
-  deploymentUrl:
-    process.env.NEXT_PUBLIC_DEPLOYMENT_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000"),
-  assistantId: process.env.NEXT_PUBLIC_ASSISTANT_ID || "horo",
-  langsmithApiKey: process.env.NEXT_PUBLIC_LANGSMITH_API_KEY || "",
-};
+// Compute default deploymentUrl at call time, not module init time.
+// During Next.js static build, window is undefined — we must defer this.
+function getDefaultDeploymentUrl(): string {
+  if (typeof window !== "undefined") return window.location.origin;
+  return "http://localhost:8000";
+}
+
+function getDefaults(): StandaloneConfig {
+  return {
+    deploymentUrl: process.env.NEXT_PUBLIC_DEPLOYMENT_URL || getDefaultDeploymentUrl(),
+    assistantId: process.env.NEXT_PUBLIC_ASSISTANT_ID || "horo",
+    langsmithApiKey: process.env.NEXT_PUBLIC_LANGSMITH_API_KEY || "",
+  };
+}
 
 export function getConfig(): StandaloneConfig {
-  if (typeof window === "undefined") return DEFAULT_CONFIG;
+  const defaults = getDefaults();
+  if (typeof window === "undefined") return defaults;
 
   const stored = localStorage.getItem(CONFIG_KEY);
-  if (!stored) return DEFAULT_CONFIG;
+  if (!stored) return defaults;
 
   try {
-    const parsed = { ...DEFAULT_CONFIG, ...JSON.parse(stored) };
+    const parsed = { ...defaults, ...JSON.parse(stored) };
     // Fix stale localhost URLs when served from a different host
     if (
       parsed.deploymentUrl.includes("localhost") &&
@@ -32,7 +39,7 @@ export function getConfig(): StandaloneConfig {
     }
     return parsed;
   } catch {
-    return DEFAULT_CONFIG;
+    return defaults;
   }
 }
 
