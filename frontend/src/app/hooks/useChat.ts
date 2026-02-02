@@ -146,7 +146,7 @@ export function useChat({
       if (!threadId) return;
       // Call the backend reject endpoint directly (bypasses agent)
       const baseUrl =
-        (client as any).apiUrl || "http://localhost:8000";
+        (client as any).apiUrl || window.location.origin;
       await fetch(`${baseUrl}/threads/${threadId}/reject_change`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
