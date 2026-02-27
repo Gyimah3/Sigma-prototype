@@ -311,7 +311,7 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
                       change={change}
                       autoMode={autoMode}
                       onApply={(id) => {
-                        sendMessage(`Please apply the proposed change with ID: ${id}`);
+                        sendMessage(`Apply this change. [change_id:${id}]`);
                       }}
                       onReject={(id) => {
                         // Optimistically hide, then call backend

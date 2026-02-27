@@ -12,9 +12,9 @@ SIGMA guides entrepreneurs through a structured journey: ideation → business m
 
 ---
 
-## Our Approach
+## My Approach
 
-We built an **agentic, tool-calling AI co-pilot** that reads and writes canvases directly. Instead of generating text for the user to copy, the agent:
+I built an **agentic, tool-calling AI co-pilot** that reads and writes canvases directly. Instead of generating text for the user to copy, the agent:
 
 1. Receives experiment outcomes and founder observations via chat
 2. Reflects on the evidence using a dedicated `think` tool
@@ -22,8 +22,9 @@ We built an **agentic, tool-calling AI co-pilot** that reads and writes canvases
 4. Proposes structured changes to specific canvas sections (`propose_canvas_update`)
 5. Applies changes only after founder approval — or automatically if auto-mode is on (`apply_proposed_changes`)
 6. Maintains full version history with undo/redo support
+7. Can `redo` and `undo` changes
 
-The agent uses a **ReAct (Reason + Act) pattern** via LangGraph, meaning it decides which tools to call and in what order based on the conversation context. This makes it genuinely iterative — each experiment outcome can trigger a targeted canvas update rather than a full regeneration.
+The agent uses a **ReAct (Reason + Act) Deep Agent pattern** via LangGraph, meaning it decides which tools to call and in what order based on the conversation context. This makes it genuinely iterative — each experiment outcome can trigger a targeted canvas update rather than a full regeneration.
 
 ---
 
@@ -88,6 +89,15 @@ All changes are attributed (applied by agent vs. applied by user) and timestampe
 - **Backend:** FastAPI server exposing LangGraph-compatible endpoints (threads, assistants, runs). The ReAct agent is built with LangGraph and powered by GPT-4o. Canvas state is stored in-memory per thread.
 - **Streaming:** Agent responses stream via Server-Sent Events so the founder sees tool calls and reasoning in real time.
 
+
+
+### Access
+
+Open `http://13.216.114.93:8000/sigma` in your browser. Create a new thread and start chatting with Horo about experiment outcomes to see canvas proposals in action.
+
+> **Tip:** Switch to the canvas tab you want the agent to modify (BMC, VPC, or Segments) so you can see the agent's live activity — proposed changes, apply/reject buttons, and updates — as they happen on that section in real time.
+
+Backend: `http://13.216.114.93:8000/docs`
 ---
 
 ## How to Run
@@ -126,8 +136,4 @@ npm run build
 # The static output (out/) is served by the backend at /sigma
 ```
 
-### Access
 
-Open `http://localhost:8000/sigma` in your browser. Create a new thread and start chatting with Horo about experiment outcomes to see canvas proposals in action.
-
-> **Tip:** Switch to the canvas tab you want the agent to modify (BMC, VPC, or Segments) so you can see the agent's live activity — proposed changes, apply/reject buttons, and updates — as they happen on that section in real time.

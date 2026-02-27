@@ -76,6 +76,7 @@ def get_canvases() -> str:
         "vpc": state["vpc"],
         "segments": state["segments"],
         "auto_mode": state.get("auto_mode", False),
+        "rejected_changes": state.get("rejected_changes", []),
     }
     return json.dumps(result, indent=2)
 
@@ -96,7 +97,7 @@ def propose_canvas_update(
         field: Which field/section to update (e.g. "key_partners", "customer_jobs", "name")
         action: Type of change - "add", "update", or "remove"
         new_value: The new value to add or update to
-        old_value: The existing value being updated or removed
+        old_value: The existing value being updated or removed. For segments, this must always be the segment's NAME (used to identify which segment to modify), regardless of which field is being updated.
         reason: Why this change is proposed, linked to evidence from experiments
     """
     tid = current_thread_id.get()
@@ -126,14 +127,14 @@ def propose_canvas_update(
         pending = state.setdefault("pending_changes", [])
         pending.append(change.model_dump())
         return (
-            f"Proposed change (ID: {change.id}):\n"
+            f"Proposed change:\n"
             f"  Canvas: {canvas_type}\n"
             f"  Field: {field}\n"
             f"  Action: {action}\n"
             f"  Old: {old_value or '(none)'}\n"
             f"  New: {new_value or '(none)'}\n"
             f"  Reason: {reason}\n"
-            f"Waiting for founder approval."
+            f"[change_id:{change.id}] Waiting for founder approval."
         )
 
 
@@ -142,12 +143,16 @@ def apply_proposed_changes(change_ids: list[str]) -> str:
     """Apply one or more proposed changes that the founder has approved.
 
     Args:
-        change_ids: List of change IDs to apply from pending_changes
+        change_ids: List of change IDs to apply from pending_changes.
+            Pass an empty list to apply ALL pending changes.
     """
     tid = current_thread_id.get()
     state = get_canvas_state(tid)
     pending = state.get("pending_changes", [])
     results = []
+
+    if not change_ids:
+        change_ids = [c["id"] for c in pending]
 
     for cid in change_ids:
         change_dict = next((c for c in pending if c["id"] == cid), None)
@@ -211,6 +216,9 @@ def undo_last_change() -> str:
     state["undo_stack"] = undo_stack
     state.setdefault("redo_stack", []).append(last_version)
 
+    # Remove hash from versions so the change can be re-proposed after undo
+    state["versions"] = [v for v in state.get("versions", []) if v["change_hash"] != last_version["change_hash"]]
+
     canvas_type = last_version["canvas_type"]
     snapshot_before = last_version["snapshot_before"]
 
@@ -237,6 +245,11 @@ def redo_change() -> str:
     version = redo_stack.pop()
     state["redo_stack"] = redo_stack
     state.setdefault("undo_stack", []).append(version)
+
+    # Re-add to versions so idempotency check knows this change is active again
+    versions = state.setdefault("versions", [])
+    if not any(v["change_hash"] == version["change_hash"] for v in versions):
+        versions.append(version)
 
     canvas_type = version["canvas_type"]
     snapshot_after = version["snapshot_after"]
@@ -354,6 +367,8 @@ def _apply_single_change(state: dict, change: ProposedChange) -> str:
         elif action == "remove" and change.old_value:
             segments = [s for s in segments if s.name != change.old_value]
         elif action == "update" and change.old_value and change.new_value:
+            # old_value is always the segment's NAME (used to identify which segment to update)
+            # field specifies which attribute to change, new_value is the new value for that field
             for seg in segments:
                 if seg.name == change.old_value:
                     if field == "name":
@@ -365,6 +380,11 @@ def _apply_single_change(state: dict, change: ProposedChange) -> str:
                     elif field == "importance":
                         seg.importance = SegmentImportance(change.new_value)
                     break
+            else:
+                return (
+                    f"No segment found with name '{change.old_value}'. "
+                    f"Pass the segment's name as old_value to identify which segment to update."
+                )
 
         state["segments"] = [s.model_dump() for s in segments]
         snapshot_after = {"items": state["segments"]}

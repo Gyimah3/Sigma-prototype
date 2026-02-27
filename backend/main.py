@@ -379,6 +379,7 @@ async def reject_change(thread_id: str, request: Request):
 
     canvas = get_canvas_state(thread_id)
     before = len(canvas.get("pending_changes", []))
+    rejected = next((c for c in canvas.get("pending_changes", []) if c["id"] == change_id), None)
     canvas["pending_changes"] = [
         c for c in canvas.get("pending_changes", []) if c["id"] != change_id
     ]
@@ -386,6 +387,9 @@ async def reject_change(thread_id: str, request: Request):
 
     if before == after:
         return {"status": "not_found", "change_id": change_id}
+
+    # Record rejection so the agent knows not to re-propose
+    canvas.setdefault("rejected_changes", []).append(rejected)
     return {"status": "rejected", "change_id": change_id, "remaining": after}
 
 

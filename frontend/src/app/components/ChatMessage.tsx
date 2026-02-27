@@ -114,7 +114,7 @@ export const ChatMessage = React.memo<ChatMessageProps>(
               >
                 {isUser ? (
                   <p className="m-0 whitespace-pre-wrap break-words text-sm leading-relaxed">
-                    {messageContent}
+                    {messageContent.replace(/\s*\[change_id:[^\]]+\]/, "")}
                   </p>
                 ) : hasContent ? (
                   <MarkdownContent content={messageContent} />

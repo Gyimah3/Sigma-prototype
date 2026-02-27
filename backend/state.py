@@ -27,6 +27,7 @@ def get_canvas_state(thread_id: str) -> dict:
             "segments": [s.model_dump() for s in get_seed_segments()],
             "versions": [],
             "pending_changes": [],
+            "rejected_changes": [],
             "undo_stack": [],
             "redo_stack": [],
             "auto_mode": False,
